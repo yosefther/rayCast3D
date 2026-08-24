@@ -2,12 +2,14 @@
 
 import math
 
+import pygame
 import pytest
 
 from map import Map
 from player import Player
 from ray import Ray, normalized_angle
-from settings import TILE_SIZE
+from rayCaster import Raycaster
+from settings import NUM_RAYS, TILE_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH
 
 
 @pytest.fixture
@@ -52,3 +54,47 @@ def test_vertical_ray_has_stable_math(level_and_player):
     assert ray.hit_y == pytest.approx(7 * TILE_SIZE)
     assert not ray.hit_vertical
 
+
+def test_player_cannot_cross_wall(level_and_player):
+    """Collision blocks movement into a solid tile."""
+    _, player = level_and_player
+    starting_x = player.x
+
+    player.move(3 * TILE_SIZE, 0)
+
+    assert player.x == starting_x
+
+
+def test_player_can_move_through_open_floor(level_and_player):
+    """Movement succeeds when the destination is open."""
+    _, player = level_and_player
+    starting_y = player.y
+
+    player.move(0, TILE_SIZE / 4)
+
+    assert player.y == pytest.approx(starting_y + TILE_SIZE / 4)
+
+
+def test_raycaster_rebuilds_a_fixed_number_of_rays(level_and_player):
+    """Each cast replaces the previous fixed-size ray set."""
+    level, player = level_and_player
+    caster = Raycaster(player, level)
+
+    first_rays = caster.cast_rays()
+    second_rays = caster.cast_rays()
+
+    assert len(first_rays) == NUM_RAYS
+    assert len(second_rays) == NUM_RAYS
+    assert all(ray.distance > 0 for ray in second_rays)
+
+
+def test_renderer_draws_to_surface(level_and_player):
+    """The 3D renderer writes visible pixels to its target."""
+    level, player = level_and_player
+    caster = Raycaster(player, level)
+    surface = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    caster.cast_rays()
+    caster.render_3d(surface)
+
+    assert surface.get_at((WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2)) != (0, 0, 0, 255)
