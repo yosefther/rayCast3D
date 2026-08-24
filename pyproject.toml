@@ -1,10 +1,18 @@
 [project]
-name = "raycast"
-version = "0.1.0"
-description = "Add your description here"
+name = "raycast3d"
+version = "1.0.0"
+description = "A dependency-light 3D ray-casting demo built with Pygame"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
-    "gamepy>=0.1.5",
     "pygame>=2.6.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
