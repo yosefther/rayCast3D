@@ -8,8 +8,11 @@ from map import Map
 from player import Player
 from rayCaster import Raycaster
 from settings import (
+    ACCENT_COLOUR,
     FPS,
+    HUD_COLOUR,
     TITLE,
+    WINDOW_HEIGHT,
     WINDOW_WIDTH,
 )
 
@@ -55,8 +58,83 @@ class Game:
 
     def render(self) -> None:
         """Draw the active view and present the finished frame."""
-        self.raycaster.render_3d(self.screen)
+        if self.top_down_view:
+            self._render_top_down()
+        else:
+            self.raycaster.render_3d(self.screen)
+            if self.show_minimap:
+                self._render_minimap()
+        self._render_hud()
         pygame.display.flip()
+
+    def _render_top_down(self) -> None:
+        """Draw the full map and its sampled rays."""
+        self.screen.fill((10, 13, 18))
+        tile_size = min(
+            (WINDOW_WIDTH - 48) / self.map.columns,
+            (WINDOW_HEIGHT - 72) / self.map.rows,
+        )
+        map_width = self.map.columns * tile_size
+        map_height = self.map.rows * tile_size
+        origin = (
+            round((WINDOW_WIDTH - map_width) / 2),
+            round((WINDOW_HEIGHT - map_height) / 2),
+        )
+        self.map.render_top_down(
+            self.screen,
+            self.player,
+            self.raycaster.rays,
+            origin=origin,
+            tile_size=tile_size,
+        )
+
+    def _render_minimap(self) -> None:
+        """Draw the compact map overlay."""
+        tile_size = 10
+        width = self.map.columns * tile_size
+        height = self.map.rows * tile_size
+        panel = pygame.Surface((width + 12, height + 12), pygame.SRCALPHA)
+        panel.fill((4, 7, 11, 205))
+        self.map.render_top_down(
+            panel,
+            self.player,
+            self.raycaster.rays,
+            origin=(6, 6),
+            tile_size=tile_size,
+            background=(16, 20, 27),
+        )
+        self.screen.blit(panel, (14, 14))
+        pygame.draw.rect(
+            self.screen, (158, 174, 194), (14, 14, width + 12, height + 12), 1
+        )
+
+    def _render_hud(self) -> None:
+        """Draw performance, view, and control information."""
+        fps_text = self.small_font.render(
+            f"{self.clock.get_fps():.0f} FPS", True, ACCENT_COLOUR
+        )
+        self.screen.blit(fps_text, (WINDOW_WIDTH - fps_text.get_width() - 14, 12))
+
+        view_name = "TOP-DOWN" if self.top_down_view else "3D VIEW"
+        view_text = self.font.render(view_name, True, HUD_COLOUR)
+        self.screen.blit(
+            view_text,
+            (WINDOW_WIDTH // 2 - view_text.get_width() // 2, 12),
+        )
+
+        if self.show_help:
+            help_text = "W/S move  A/D strafe  Q/E or arrows turn  TAB view  M map  H help  ESC quit"
+            rendered = self.small_font.render(help_text, True, HUD_COLOUR)
+            box = pygame.Surface((rendered.get_width() + 20, 30), pygame.SRCALPHA)
+            box.fill((3, 6, 10, 175))
+            box.blit(rendered, (10, 7))
+            self.screen.blit(
+                box,
+                (
+                    WINDOW_WIDTH // 2 - box.get_width() // 2,
+                    WINDOW_HEIGHT - box.get_height() - 10,
+                ),
+            )
 
     def run(self, max_frames: int | None = None) -> None:
         """Run until closed; max_frames supports automated smoke tests."""
