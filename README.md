@@ -2,11 +2,6 @@
 
 A ray-casting engine in Python and Pygame. It turns a 2D tile map into a first-person 3D view, the same trick old games like Wolfenstein 3D used. No image assets: walls are flat colours with procedural shading.
 
-TODO(yosef): one line on why you built it.
-
-![demo](docs/demo.gif)
-<!-- TODO(yosef): record GIF -->
-
 ## How to run it
 
 Python 3.10+ with [uv](https://docs.astral.sh/uv/):
@@ -43,10 +38,6 @@ uv run pytest
 ```
 
 8 tests cover angle wrapping, map bounds, ray hits, collisions and that the renderer actually draws.
-
-## What's next
-
-TODO(yosef): what's next (textures, sprites, ...?).
 
 ## License
 
