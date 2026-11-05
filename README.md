@@ -1,54 +1,53 @@
 # RayCast 3D
 
-A small, complete ray-casting engine written in Python and Pygame. It turns a
-2D tile map into a first-person 3D view using one DDA ray per screen column
-group. No image or map assets are required.
+A ray-casting engine in Python and Pygame. It turns a 2D tile map into a first-person 3D view, the same trick old games like Wolfenstein 3D used. No image assets: walls are flat colours with procedural shading.
 
-## Features
+TODO(yosef): one line on why you built it.
 
-- Real-time 3D wall projection with fish-eye correction
-- Fast grid-based DDA ray intersection
-- Frame-rate-independent movement, strafing, and wall collision
-- Distance, wall-side, material, and procedural texture shading
-- Live minimap plus a full top-down ray-debug view
-- On-screen controls and FPS counter
-- Unit tests for ray math, map bounds, collisions, and renderer behavior
+![demo](docs/demo.gif)
+<!-- TODO(yosef): record GIF -->
 
-## Run
+## How to run it
 
-Python 3.10 or newer is required.
+Python 3.10+ with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv sync
 uv run python main.py
 ```
 
-Without uv, use a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install pygame
-python main.py
-```
-
-## Controls
+Or without uv: `pip install pygame`, then `python main.py`.
 
 | Key | Action |
 | --- | --- |
-| W / S or up/down arrows | Move forward/back |
-| A / D | Strafe left/right |
-| Q / E or left/right arrows | Turn |
-| Tab | Switch between 3D and top-down debug views |
-| M | Toggle the minimap |
-| H or F1 | Toggle control help |
-| Esc | Quit |
+| W / S or up/down | move |
+| A / D | strafe |
+| Q / E or left/right | turn |
+| Tab | switch between 3D and top-down debug view |
+| M | minimap |
+| H or F1 | help |
+| Esc | quit |
 
-## Test
+## How it works
+
+Every frame casts 512 rays across a 60° field of view, one for each 2-pixel column of the 1024px window. Each ray walks the grid with DDA (`ray.py`): instead of stepping a fixed distance, it jumps straight to the next vertical or horizontal grid line, whichever is closer, until it hits a wall tile. So it never misses a wall and never wastes steps marching through open floor.
+
+`rayCaster.py` then turns each hit distance into a wall slice. The distance is multiplied by `cos(ray angle - view angle)` first to remove the fish-eye effect, and slice height is `tile size * projection distance / distance`. Shading combines distance, which side of the wall was hit, and a sine pattern on the texture offset so the walls don't look flat.
+
+Movement checks collisions on each axis separately, so you slide along walls instead of sticking to them. To change the maze, edit `Map.grid` in `map.py`: 0 is floor, 1–3 are wall colours.
+
+## Tests
 
 ```bash
 uv run pytest
 ```
 
-The project is intentionally asset-free. Edit Map.grid in map.py to change
-the maze; zero is floor and positive values select wall colours.
+8 tests cover angle wrapping, map bounds, ray hits, collisions and that the renderer actually draws.
+
+## What's next
+
+TODO(yosef): what's next (textures, sprites, ...?).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
